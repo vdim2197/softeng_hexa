@@ -1,7 +1,7 @@
 # Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
 # More GitHub Actions for Azure: https://github.com/Azure/actions
 
-name: Build and deploy WAR app to Azure Web App - coffeSpring
+name: Build and deploy JAR app to Azure Web App
 
 on:
   push:
@@ -21,14 +21,14 @@ jobs:
         with:
           java-version: '17'
 
-      - name: Build with Maven
-        run: mvn clean install
+      - name: Build with Gradle
+        run: gradle build
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v3
         with:
           name: java-app
-          path: '${{ github.workspace }}/target/*.war'
+          path: '${{ github.workspace }}/build/libs/*.jar'
 
   deploy:
     runs-on: ubuntu-latest
@@ -36,18 +36,24 @@ jobs:
     environment:
       name: 'Production'
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
-    
+    permissions:
+      id-token: write #This is required for requesting the JWT
+
     steps:
       - name: Download artifact from build job
         uses: actions/download-artifact@v3
         with:
           name: java-app
-      
+
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_VDIM2197_SECRETS }}
+
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v2
         with:
-          app-name: 'coffeSpring'
+          app-name: 'vdim2197HexagonalWebApp'
           slot-name: 'Production'
-          package: '*.war'
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_782789562D0B43D7BD9D25699AB8D146 }}
+          package: 'vdim2197-hexagonal-architecture.jar'
